@@ -13,13 +13,14 @@ import joblib
 import plotly.express as px
 import openpyxl
 from openpyxl.styles import PatternFill
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 # === БЛОК 2: Функции для Optuna ===
 
 
 def objective(trial, X_train, X_val, y_train, y_val, cat_features):
     params = {
-        'iterations': trial.suggest_int('iterations', 500, 15000),
+        'iterations': trial.suggest_int('iterations', 500, 3000),
         'learning_rate': trial.suggest_float('learning_rate', 1e-5, 0.1, log=True),
         'depth': trial.suggest_int('depth', 4, 16),
         'l2_leaf_reg': trial.suggest_float('l2_leaf_reg', 1e-3, 10, log=True),
@@ -102,67 +103,98 @@ def process_and_train_model(file_path, test_size=0.1, threshold_percentage=1,
         final_model, X_val, y_val, n_repeats=10)
     sorted_idx = perm_importance.importances_mean.argsort()[::-1]
 
+    # Веса признаков из модели
+    model_importances = final_model.get_feature_importance()
+
     feature_analysis = pd.DataFrame({
-        'feature': X.columns[sorted_idx],
-        'importance': perm_importance.importances_mean[sorted_idx],
-        'type': ['Категориальный' if i in cat_features else 'Числовой' for i in sorted_idx]
+        'Признак': X.columns[sorted_idx],
+        'Пермутационная важность': perm_importance.importances_mean[sorted_idx],
+        'Вес из модели': model_importances[sorted_idx],
+        'Тип': ['Категориальный' if i in cat_features else 'Числовой' for i in sorted_idx]
     })
 
     # Сохранение результатов
     final_model.save_model(model_save_path)
 
     # Генерация отчетов
-    generate_reports(study, X_train, X_val, y_val, y_pred, feature_analysis)
+    generate_reports(study, final_model, X_train, X_val,
+                     y_val, y_pred, feature_analysis)
 
     return final_model, X_train, X_val, y_train, y_val, y_pred, cat_features, feature_analysis, study
 
 # === БЛОК 4: Генерация отчетов ===
 
 
-def generate_reports(study, X_train, X_val, y_val, y_pred, feature_analysis):
-    # Визуализация Optuna
-    fig = plot_optimization_history(study)
-    fig.write_html("optimization_history.html")
+def generate_reports(study, model, X_train, X_val, y_val, y_pred, feature_analysis):
+    # Создаем единый Excel-файл
+    with pd.ExcelWriter('full_report.xlsx', engine='openpyxl') as writer:
+        # Лист с важностью признаков
+        feature_analysis.to_excel(
+            writer, sheet_name='Feature_Importance', index=False)
 
-    fig = plot_param_importances(study)
-    fig.write_html("param_importances.html")
+        # Лист с ошибками
+        error_matrix = pd.DataFrame({
+            'Истинное значение': y_val.values,
+            'Предсказанное значение': y_pred,
+            'Абсолютная ошибка': np.abs(y_val - y_pred),
+            'Процент ошибки': np.abs((y_val - y_pred) / y_val) * 100
+        })
+        error_matrix.to_excel(writer, sheet_name='Error_Analysis', index=False)
 
-    # Анализ признаков
-    threshold = feature_analysis['importance'].quantile(0.25)
-    feature_analysis['recommendation'] = np.where(
-        feature_analysis['importance'] < threshold,
+        # Лист с гиперпараметрами
+        hyper_params = pd.DataFrame([study.best_params])
+        hyper_params.to_excel(
+            writer, sheet_name='Hyperparameters', index=False)
+
+        # Лист с матрицей корреляций
+        corr_matrix = X_train.corr()
+        corr_matrix.to_excel(writer, sheet_name='Correlation_Matrix')
+
+        # Лист с логами оптимизации
+        optimization_log = study.trials_dataframe()
+        optimization_log.to_excel(
+            writer, sheet_name='Optimization_Log', index=False)
+
+        # Применяем форматирование
+        workbook = writer.book
+        apply_formatting(workbook, feature_analysis)
+
+    # Сохранение графиков
+    save_plots(study, X_train, y_val, y_pred)
+
+
+def apply_formatting(workbook, feature_analysis):
+    # Форматирование для Feature_Importance
+    ws = workbook['Feature_Importance']
+
+    # Добавляем рекомендации
+    threshold = feature_analysis['Пермутационная важность'].quantile(0.25)
+    feature_analysis['Рекомендация'] = np.where(
+        feature_analysis['Пермутационная важность'] < threshold,
         'Удалить',
         'Сохранить'
     )
 
-    with pd.ExcelWriter('feature_recommendations.xlsx', engine='openpyxl') as writer:
-        feature_analysis.to_excel(writer, index=False)
-        workbook = writer.book
-        worksheet = writer.sheets['Sheet1']
+    # Записываем рекомендации в столбец F (6-й столбец)
+    for row_idx, (_, row) in enumerate(feature_analysis.iterrows(), start=2):
+        ws.cell(row=row_idx, column=6).value = row['Рекомендация']
 
-        red_fill = PatternFill(start_color='FFC7CE',
-                               end_color='FFC7CE', fill_type='solid')
-        green_fill = PatternFill(start_color='C6EFCE',
-                                 end_color='C6EFCE', fill_type='solid')
+    # Условное форматирование
+    red_fill = PatternFill(start_color='FFC7CE',
+                           end_color='FFC7CE', fill_type='solid')
+    green_fill = PatternFill(start_color='C6EFCE',
+                             end_color='C6EFCE', fill_type='solid')
 
-        for row in range(2, len(feature_analysis)+2):
-            cell = worksheet[f'D{row}']
-            if cell.value == 'Удалить':
-                cell.fill = red_fill
-            else:
-                cell.fill = green_fill
+    for row in range(2, len(feature_analysis)+2):
+        cell = ws[f'F{row}']
+        if cell.value == 'Удалить':
+            cell.fill = red_fill
+        else:
+            cell.fill = green_fill
 
-    # Матрица ошибок
-    error_matrix = pd.DataFrame({
-        'Истинное значение': y_val.values,
-        'Предсказанное значение': y_pred,
-        'Абсолютная ошибка': np.abs(y_val - y_pred),
-        'Процент ошибки': np.abs((y_val - y_pred) / y_val) * 100
-    })
 
-    error_matrix.to_excel('error_analysis.xlsx', index=False)
-
-    # Графики
+def save_plots(study, X_train, y_val, y_pred):
+    # График сравнения предсказаний
     plt.figure(figsize=(10, 6))
     sns.regplot(x=y_val, y=y_pred, scatter_kws={'alpha': 0.3})
     plt.plot([y_val.min(), y_val.max()], [
@@ -178,6 +210,13 @@ def generate_reports(study, X_train, X_val, y_val, y_pred, feature_analysis):
     plt.savefig('correlation_matrix.png', dpi=300)
     plt.close()
 
+    # Визуализации Optuna
+    fig = plot_optimization_history(study)
+    fig.write_html("optimization_history.html")
+
+    fig = plot_param_importances(study)
+    fig.write_html("param_importances.html")
+
 
 # === БЛОК 5: Запуск приложения ===
 if __name__ == "__main__":
@@ -185,12 +224,15 @@ if __name__ == "__main__":
     model, X_train, X_val, y_train, y_val, y_pred, cat_features, feature_analysis, study = process_and_train_model(
         file_path=file_path,
         test_size=0.1,
-        threshold_percentage=10,
-        n_trials=10
+        threshold_percentage=5,
+        n_trials=5
     )
 
-    print("Обучение завершено. Результаты сохранены в файлы:")
-    print("- feature_recommendations.xlsx (рекомендации по признакам)")
-    print("- error_analysis.xlsx (анализ ошибок)")
-    print("- optimization_history.html (визуализация оптимизации)")
-    print("- true_vs_predicted.png (график предсказаний)")
+    print("Обучение завершено. Основные результаты:")
+    print("- full_report.xlsx - полный отчет с листами:")
+    print("  * Feature_Importance - веса и важность признаков")
+    print("  * Error_Analysis - анализ ошибок предсказаний")
+    print("  * Hyperparameters - лучшие гиперпараметры")
+    print("  * Correlation_Matrix - матрица корреляций")
+    print("  * Optimization_Log - логи оптимизации")
+    print("- Визуализации сохранены в PNG и HTML файлы")
