@@ -224,7 +224,7 @@ if __name__ == "__main__":
     model, X_train, X_val, y_train, y_val, y_pred, cat_features, feature_analysis, study = process_and_train_model(
         file_path=file_path,
         test_size=0.1,
-        threshold_percentage=5,
+        threshold_percentage=1,
         n_trials=5
     )
 
