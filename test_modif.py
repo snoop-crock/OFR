@@ -220,7 +220,7 @@ def save_plots(study, X_train, y_val, y_pred):
 
 # === БЛОК 5: Запуск приложения ===
 if __name__ == "__main__":
-    file_path = "test.xlsx"
+    file_path = "Dataset.xlsx"
     model, X_train, X_val, y_train, y_val, y_pred, cat_features, feature_analysis, study = process_and_train_model(
         file_path=file_path,
         test_size=0.1,
