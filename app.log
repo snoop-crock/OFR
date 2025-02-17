@@ -1,0 +1,32 @@
+2025-02-17 18:24:55,612 - INFO - Модель загружена: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/knn_model.pkl
+2025-02-17 18:25:26,256 - INFO - Данные загружены: C:/Users/nikit/Downloads/5.Generation/e.xlsx
+2025-02-17 18:25:31,070 - ERROR - Ошибка выполнения прогноза: X has 20 features, but KNeighborsRegressor is expecting 19 features as input.
+2025-02-17 18:27:54,579 - INFO - Модель загружена: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/random_forest_model.pkl
+2025-02-17 18:27:55,738 - ERROR - Ошибка выполнения прогноза: X has 20 features, but RandomForestRegressor is expecting 19 features as input.
+2025-02-17 18:29:38,782 - INFO - Модель загружена: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/knn_model.pkl
+2025-02-17 18:29:47,969 - INFO - Данные загружены: C:/Users/nikit/Downloads/5.Generation/e — копия.xlsx
+2025-02-17 18:29:49,655 - ERROR - Ошибка выполнения прогноза: X has 21 features, but KNeighborsRegressor is expecting 19 features as input.
+2025-02-17 18:30:33,485 - INFO - Модель загружена: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/random_forest_model.pkl
+2025-02-17 18:30:34,855 - ERROR - Ошибка выполнения прогноза: X has 21 features, but RandomForestRegressor is expecting 19 features as input.
+2025-02-17 18:30:47,931 - INFO - Модель загружена: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/random_forest_model_optimized.pkl
+2025-02-17 18:30:48,863 - ERROR - Ошибка выполнения прогноза: The feature names should match those that were passed during fit.
+Feature names unseen at fit time:
+- OFR
+- W_ID
+
+2025-02-17 18:31:35,108 - INFO - Данные загружены: C:/Users/nikit/Downloads/5.Generation/e — копия.xlsx
+2025-02-17 18:31:50,980 - INFO - Результаты сохранены: C:/Users/nikit/Downloads/5.Generation/Forest.xlsx
+2025-02-17 18:31:52,749 - INFO - Прогноз успешно завершен
+2025-02-17 18:34:02,258 - INFO - Модель загружена: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/knn_model.pkl
+2025-02-17 18:34:14,687 - INFO - Результаты сохранены: C:/Users/nikit/Downloads/5.Generation/KNN.xlsx
+2025-02-17 18:34:16,327 - INFO - Прогноз успешно завершен
+2025-02-17 18:34:45,497 - INFO - Модель загружена: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/random_forest_optuna_model.pkl
+2025-02-17 18:34:59,315 - INFO - Результаты сохранены: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/Forest_optuna.xlsx
+2025-02-17 18:35:00,540 - INFO - Прогноз успешно завершен
+2025-02-17 18:36:00,739 - INFO - Прогноз успешно завершен
+2025-02-17 18:36:50,995 - INFO - Модель загружена: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/random_forest_model.pkl
+2025-02-17 18:37:04,811 - INFO - Результаты сохранены: C:/Users/nikit/Downloads/5.Generation/bbase+forest.xlsx
+2025-02-17 18:37:06,120 - INFO - Прогноз успешно завершен
+2025-02-17 18:38:02,040 - INFO - Модель загружена: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/random_forest_model_optimized.pkl
+2025-02-17 18:38:08,341 - INFO - Результаты сохранены: F:/other files/Никитины работы/Honors Track/!!!!! NEURAL NETWORK/test_new/pkl мусор/gfdg.xlsx
+2025-02-17 18:38:10,091 - INFO - Прогноз успешно завершен
